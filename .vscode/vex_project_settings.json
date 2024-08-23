@@ -1,0 +1,18 @@
+{
+	"project": {
+		"name": "Pneuirrel_V2",
+		"slot": 2,
+		"description": "",
+		"platform": "V5",
+		"creationDate": "Thu, 22 Aug 2024 12:01:31 GMT",
+		"language": "cpp",
+		"sdkVersion": "V5_20240223_11_00_00",
+		"cpp": {
+			"includePath": []
+		}
+	},
+	"extension": {
+		"version": "0.6.0",
+		"json": 1
+	}
+}
