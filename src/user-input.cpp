@@ -32,19 +32,76 @@ program that does something after a certain amount of time or for a certain amou
 use a condition using the time in onPing() to avoid this.
 */
 /*
+ *
+ * BUTTON DOCS:
+ *
+ * Left Joystick - left tank drive
+ * Right Joystick - right tank drive
+ *
+ * L1 -
+ * L2 -
+ * R1 -
+ * R2 -
+ * Up -
+ * Down -
+ * Left -
+ * Right -
+ * A - Change front of robot
+ * B -
+ * X - Change Drive Speed Mode
+ * Y -
+ *
+ */
+/*
 ---------------Enums---------------------------
 */
-
+enum side
+{
+  PORT,
+  STARBOARD,
+  FORWARD,
+  AFT
+};
+enum speedMode
+{
+  FULL_SPEED,
+  SLOW_SPEED
+};
+double getSpeedPercent(speedMode mode)
+{
+  switch (mode)
+  {
+  case FULL_SPEED:
+    return 1.0;
+  case SLOW_SPEED:
+    return .5;
+  default:
+    break;
+  }
+}
 /*
 ---------------Constants------------------------
-(constants and variables should go in their minimum scope,
-meaning that if it only is used by one button, it should go in that button's namespace)
 */
+// Motors
+// - Drive Train
+// - - Port Side
+vex::motor frontLeftDriveTrainMotor{vex::PORT12};
+vex::motor backLeftDriveTrainMotor{vex::PORT10};
+vex::motor_group leftDriveTrainMotorGroup{frontLeftDriveTrainMotor, backLeftDriveTrainMotor};
+// - - Starboard Side
+vex::motor frontRightDriveTrainMotor{vex::PORT12};
+vex::motor backRightDriveTrainMotor{vex::PORT10};
+vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
 
 /*
 ---------------Variables-----------------------
 */
-
+speedMode driveSpeedMode{FULL_SPEED};
+double driveSpeedPercent = getSpeedPercent(driveSpeedMode);
+side frontSide{FORWARD};
+/*
+---------------Button Definitions-------------
+*/
 namespace buttonA
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonA};
@@ -88,6 +145,15 @@ namespace buttonX
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonX};
   void onPress()
   {
+    if (driveSpeedMode == FULL_SPEED)
+    {
+      driveSpeedMode = SLOW_SPEED;
+    }
+    else
+    {
+      driveSpeedMode = FULL_SPEED;
+    }
+    driveSpeedPercent = getSpeedPercent(driveSpeedMode);
   }
   void onRelease()
   {
@@ -279,6 +345,13 @@ namespace joystickRight
   static vex::controller::axis yAxis{Controller.Axis2};
   void onPing()
   {
+    if (frontSide == FORWARD)
+    {
+      rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    } else
+    {
+      leftDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    }
   }
 }
 
@@ -288,5 +361,12 @@ namespace joystickLeft
   static vex::controller::axis yAxis{Controller.Axis4};
   void onPing()
   {
+    if (frontSide == FORWARD)
+    {
+      leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    } else
+    {
+      rightDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    }
   }
 }
