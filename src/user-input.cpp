@@ -85,12 +85,12 @@ double getSpeedPercent(speedMode mode)
 // Motors
 // - Drive Train
 // - - Port Side
-vex::motor frontLeftDriveTrainMotor{vex::PORT12};
-vex::motor backLeftDriveTrainMotor{vex::PORT10};
+vex::motor frontLeftDriveTrainMotor{vex::PORT12, PORT};
+vex::motor backLeftDriveTrainMotor{vex::PORT10, PORT};
 vex::motor_group leftDriveTrainMotorGroup{frontLeftDriveTrainMotor, backLeftDriveTrainMotor};
 // - - Starboard Side
-vex::motor frontRightDriveTrainMotor{vex::PORT12};
-vex::motor backRightDriveTrainMotor{vex::PORT10};
+vex::motor frontRightDriveTrainMotor{vex::PORT12, STARBOARD};
+vex::motor backRightDriveTrainMotor{vex::PORT10, STARBOARD};
 vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
 
 /*
@@ -348,7 +348,8 @@ namespace joystickRight
     if (frontSide == FORWARD)
     {
       rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    } else
+    }
+    else
     {
       leftDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
     }
@@ -364,7 +365,8 @@ namespace joystickLeft
     if (frontSide == FORWARD)
     {
       leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    } else
+    }
+    else
     {
       rightDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
     }
