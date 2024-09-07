@@ -60,23 +60,6 @@ enum side
   FORWARD,
   AFT
 };
-enum speedMode
-{
-  FULL_SPEED,
-  SLOW_SPEED
-};
-double getSpeedPercent(speedMode mode)
-{
-  switch (mode)
-  {
-  case FULL_SPEED:
-    return 1.0;
-  case SLOW_SPEED:
-    return .5;
-  default:
-    break;
-  }
-}
 /*
 ---------------Constants------------------------
 */
@@ -94,12 +77,11 @@ vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightD
 /*
 ---------------Variables-----------------------
 */
-speedMode driveSpeedMode{FULL_SPEED};
-double driveSpeedPercent = getSpeedPercent(driveSpeedMode);
-side frontSide{FORWARD};
+double driveSpeedPercent = 80;
 /*
 ---------------Button Definitions-------------
 */
+
 namespace buttonA
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonA};
@@ -143,15 +125,6 @@ namespace buttonX
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonX};
   void onPress()
   {
-    if (driveSpeedMode == FULL_SPEED)
-    {
-      driveSpeedMode = SLOW_SPEED;
-    }
-    else
-    {
-      driveSpeedMode = FULL_SPEED;
-    }
-    driveSpeedPercent = getSpeedPercent(driveSpeedMode);
   }
   void onRelease()
   {
@@ -343,14 +316,7 @@ namespace joystickRight
   static vex::controller::axis yAxis{Controller.Axis2};
   void onPing()
   {
-    if (frontSide == FORWARD)
-    {
-      rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    }
-    else
-    {
-      leftDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    }
+    rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
   }
 }
 
@@ -360,13 +326,6 @@ namespace joystickLeft
   static vex::controller::axis yAxis{Controller.Axis4};
   void onPing()
   {
-    if (frontSide == FORWARD)
-    {
-      leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    }
-    else
-    {
-      rightDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
-    }
+    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
   }
 }
