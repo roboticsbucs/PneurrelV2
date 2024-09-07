@@ -6,7 +6,6 @@
 // A global instance of competition
 vex::competition Competition{};
 vex::controller Controller{vex::controller()};
-vex::brain Brain{};
 vex::timer SystemClock{};
 constexpr double MillisecondsPerTick{50}; // targeting 20 ticks per second
 
