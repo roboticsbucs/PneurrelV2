@@ -4,8 +4,11 @@
 #include "user-input.h"
 
 // A global instance of competition
-vex::competition Competition;
+vex::competition Competition{};
 vex::controller Controller{vex::controller()};
+vex::brain Brain{};
+vex::timer SystemClock{};
+constexpr double MillisecondsPerTick{50}; // targeting 20 ticks per second
 
 // define your global instances of motors and other devices here
 
@@ -68,8 +71,10 @@ void usercontrol(void)
   buttonL2::initialize();
   buttonR1::initialize();
   buttonR2::initialize();
-  while (1)
+  int timeOfStartOfTickMS{-1};
+  while (true)
   {
+    timeOfStartOfTickMS = SystemClock.time();
     buttonA::onPing();
     buttonB::onPing();
     buttonX::onPing();
@@ -84,8 +89,9 @@ void usercontrol(void)
     buttonR2::onPing();
     joystickLeft::onPing();
     joystickRight::onPing();
-    wait(20, vex::msec); // Sleep the task for a short amount of time to
-                         // prevent wasted resources.
+    int timeOfEndOfTickMS{SystemClock.time()};
+    // Sleep the thread to maintain a consistent 20 tps and conserve battery
+    wait(MillisecondsPerTick - (timeOfEndOfTickMS - timeOfStartOfTickMS), vex::msec);
   }
 }
 
@@ -94,6 +100,8 @@ void usercontrol(void)
 //
 int main()
 {
+  // Start up System Clock
+  SystemClock.reset();
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
