@@ -4,10 +4,11 @@
 #include "user-input.h"
 
 // A global instance of competition
-vex::competition Competition{};
-vex::controller Controller{vex::controller()};
+vex::competition Competition;
+vex::controller Controller = vex::controller{};
+vex::brain Brain{};
 vex::timer SystemClock{};
-constexpr double MillisecondsPerTick{50}; // targeting 20 ticks per second
+constexpr double MillisecondsPerTick{1}; // targeting 20 ticks per second
 
 // define your global instances of motors and other devices here
 
@@ -100,7 +101,7 @@ void usercontrol(void)
 int main()
 {
   // Start up System Clock
-  SystemClock.reset();
+  // SystemClock.reset();
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);

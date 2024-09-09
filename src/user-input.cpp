@@ -1,7 +1,7 @@
 #include <chrono>
+#include <iostream>
 #include "vex.h"
 #include "main.h"
-using namespace std::chrono;
 /*
 ------------------------------------------------------------------
 BUTTON DEFINITIONS ! READ ME !
@@ -66,13 +66,20 @@ enum side
 // Motors
 // - Drive Train
 // - - Port Side
-vex::motor frontLeftDriveTrainMotor{vex::PORT12, PORT};
-vex::motor backLeftDriveTrainMotor{vex::PORT10, PORT};
+vex::motor frontLeftDriveTrainMotor{vex::PORT12, STARBOARD};
+vex::motor backLeftDriveTrainMotor{vex::PORT10, STARBOARD};
 vex::motor_group leftDriveTrainMotorGroup{frontLeftDriveTrainMotor, backLeftDriveTrainMotor};
 // - - Starboard Side
-vex::motor frontRightDriveTrainMotor{vex::PORT12, STARBOARD};
-vex::motor backRightDriveTrainMotor{vex::PORT10, STARBOARD};
+vex::motor frontRightDriveTrainMotor{vex::PORT1, PORT};
+vex::motor backRightDriveTrainMotor{vex::PORT2, PORT};
 vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
+// - Lift
+vex::motor leftLift{vex::PORT6, STARBOARD};
+vex::motor rightLift{vex::PORT7, PORT};
+vex::motor_group lift{leftLift, rightLift};
+// - Puncher
+vex::motor puncher{vex::PORT8, PORT};
+constexpr double liftSpeedPct{60};
 
 /*
 ---------------Variables-----------------------
@@ -179,9 +186,13 @@ namespace buttonUp
 
 namespace buttonDown
 {
+  static vex::pneumatics wing(vex::triport(vex::PORT22).A);
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonDown};
+  static bool isWingOut{false};
   void onPress()
   {
+    isWingOut = !isWingOut;
+    wing.set(isWingOut);
   }
   void onRelease()
   {
@@ -237,8 +248,14 @@ namespace buttonRight
 namespace buttonL1
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
+  static bool isPuncherOn{false};
   void onPress()
   {
+    isPuncherOn = !isPuncherOn;
+    if (isPuncherOn)
+    {
+      
+    }
   }
   void onRelease()
   {
@@ -277,9 +294,11 @@ namespace buttonR1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR1};
   void onPress()
   {
+    lift.spin(vex::directionType::fwd, liftSpeedPct, vex::velocityUnits::pct);
   }
   void onRelease()
   {
+    lift.stop();
   }
   void onPing()
   {
@@ -296,9 +315,11 @@ namespace buttonR2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR2};
   void onPress()
   {
+    lift.spin(vex::directionType::rev, liftSpeedPct, vex::velocityUnits::pct);
   }
   void onRelease()
   {
+    lift.stop();
   }
   void onPing()
   {
@@ -322,10 +343,13 @@ namespace joystickRight
 
 namespace joystickLeft
 {
-  static vex::controller::axis xAxis{Controller.Axis3};
-  static vex::controller::axis yAxis{Controller.Axis4};
+  static vex::controller::axis xAxis{Controller.Axis4};
+  static vex::controller::axis yAxis{Controller.Axis3};
   void onPing()
   {
+    // std::cout << "foo";
+    // Controller.Screen.clearLine();
+    // Controller.Screen.print(yAxis.position());
     leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
   }
 }
