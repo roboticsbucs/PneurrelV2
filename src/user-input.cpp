@@ -38,10 +38,10 @@ so try to make your methon fail-safe to collisions
  *
  * L1 -
  * L2 -
- * R1 -
- * R2 -
+ * R1 - Raise Lift
+ * R2 - Lower Lift
  * Up -
- * Down -
+ * Down - Toggle Wing
  * Left -
  * Right -
  * A - Change front of robot
@@ -80,6 +80,10 @@ vex::motor_group lift{leftLift, rightLift};
 // - Puncher
 vex::motor puncher{vex::PORT8, PORT};
 constexpr double liftSpeedPct{60};
+// Pneumatics
+// - Wing
+vex::pneumatics wing(vex::triport{vex::PORT22}.A);
+constexpr double puncherSpeedPct = 100;
 
 /*
 ---------------Variables-----------------------
@@ -186,7 +190,6 @@ namespace buttonUp
 
 namespace buttonDown
 {
-  static vex::pneumatics wing(vex::triport(vex::PORT22).A);
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonDown};
   static bool isWingOut{false};
   void onPress()
@@ -249,13 +252,18 @@ namespace buttonL1
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
   static bool isPuncherOn{false};
+
   void onPress()
   {
-    isPuncherOn = !isPuncherOn;
     if (isPuncherOn)
     {
-      
+      puncher.stop();
     }
+    else
+    {
+      puncher.spin(vex::directionType::fwd, puncherSpeedPct, vex::velocityUnits::pct);
+    }
+    isPuncherOn = !isPuncherOn;
   }
   void onRelease()
   {
@@ -337,7 +345,7 @@ namespace joystickRight
   static vex::controller::axis yAxis{Controller.Axis2};
   void onPing()
   {
-    rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position() / 100.0, vex::velocityUnits::pct);
   }
 }
 
@@ -347,9 +355,6 @@ namespace joystickLeft
   static vex::controller::axis yAxis{Controller.Axis3};
   void onPing()
   {
-    // std::cout << "foo";
-    // Controller.Screen.clearLine();
-    // Controller.Screen.print(yAxis.position());
-    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position(), vex::velocityUnits::pct);
+    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position() / 100.0, vex::velocityUnits::pct);
   }
 }

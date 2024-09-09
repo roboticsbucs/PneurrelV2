@@ -101,7 +101,7 @@ void usercontrol(void)
 int main()
 {
   // Start up System Clock
-  // SystemClock.reset();
+  SystemClock.reset();
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
