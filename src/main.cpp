@@ -89,8 +89,8 @@ void usercontrol(void)
     buttonR2::onPing();
     joystickLeft::onPing();
     joystickRight::onPing();
-    int timeOfEndOfTickMS{static_cast<int>(SystemClock.time())};
     // Sleep the thread to maintain a consistent 20 tps and conserve battery
+    int timeOfEndOfTickMS{static_cast<int>(SystemClock.time())};
     wait(MillisecondsPerTick - (timeOfEndOfTickMS - timeOfStartOfTickMS), vex::msec);
   }
 }
