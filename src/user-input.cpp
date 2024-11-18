@@ -2,6 +2,7 @@
 #include <iostream>
 #include "vex.h"
 #include "main.h"
+
 /*
 ------------------------------------------------------------------
 BUTTON DEFINITIONS ! READ ME !
@@ -29,6 +30,7 @@ All Variables that impact only one button must be stored within the button's nam
 A note to advanced readers: every use of the method vex::controller::button::pressed spins up a new thread,
 so try to make your methon fail-safe to collisions
 */
+
 /*
  *
  * BUTTON DOCS:
@@ -36,20 +38,21 @@ so try to make your methon fail-safe to collisions
  * Left Joystick - left tank drive
  * Right Joystick - right tank drive
  *
- * L1 -
- * L2 -
- * R1 - Raise Lift
- * R2 - Lower Lift
- * Up -
- * Down - Toggle Wing
- * Left -
- * Right -
+ * L1 - Intake in
+ * L2 - Intake out
+ * R1 - 
+ * R2 - 
+ * Up - 
+ * Down - Toggle hook
+ * Left - 
+ * Right - 
  * A - Change front of robot
  * B -
  * X - Change Drive Speed Mode
  * Y -
  *
  */
+
 /*
 ---------------Enums---------------------------
 */
@@ -60,35 +63,38 @@ enum side
   FORWARD,
   AFT
 };
+
 /*
----------------Constants------------------------
+---------------Hardware Definitions--------------------
 */
 // Motors
 // - Drive Train
 // - - Port Side
-vex::motor frontLeftDriveTrainMotor{vex::PORT12, STARBOARD};
-vex::motor backLeftDriveTrainMotor{vex::PORT10, STARBOARD};
+vex::motor frontLeftDriveTrainMotor{vex::PORT4, STARBOARD};
+vex::motor backLeftDriveTrainMotor{vex::PORT3, STARBOARD};
 vex::motor_group leftDriveTrainMotorGroup{frontLeftDriveTrainMotor, backLeftDriveTrainMotor};
 // - - Starboard Side
-vex::motor frontRightDriveTrainMotor{vex::PORT1, PORT};
-vex::motor backRightDriveTrainMotor{vex::PORT2, PORT};
+vex::motor frontRightDriveTrainMotor{vex::PORT2, PORT};
+vex::motor backRightDriveTrainMotor{vex::PORT1, PORT};
 vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
-// - Lift
-vex::motor leftLift{vex::PORT6, STARBOARD};
-vex::motor rightLift{vex::PORT7, PORT};
-vex::motor_group lift{leftLift, rightLift};
-// - Puncher
-vex::motor puncher{vex::PORT8, PORT};
-constexpr double liftSpeedPct{60};
+// - Intake
+vex::motor intake(vex::PORT10, STARBOARD);
+
 // Pneumatics
-// - Wing
-vex::pneumatics wing(vex::triport{vex::PORT22}.A);
-constexpr double puncherSpeedPct = 100;
+// - Clamp
+vex::pneumatics clamp(vex::TRIPORTA);
 
 /*
 ---------------Variables-----------------------
 */
-double driveSpeedPercent = 80;
+double driveSpeedPercentDefault = 100;
+double driveSpeedPercentAlternate = 50;
+bool useDefaultSpeed = true;
+side forwardSide = FORWARD;
+
+double intakeSpeed = 50;
+bool intakeOn = false;
+vex::directionType intakeDirection = vex::forward;
 /*
 ---------------Button Definitions-------------
 */
@@ -98,6 +104,13 @@ namespace buttonA
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonA};
   void onPress()
   {
+    switch (forwardSide)
+    {
+      case FORWARD:
+        forwardSide = AFT;
+      case AFT:
+        forwardSide = FORWARD;
+    }
   }
   void onRelease()
   {
@@ -136,6 +149,7 @@ namespace buttonX
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonX};
   void onPress()
   {
+    useDefaultSpeed = !useDefaultSpeed;
   }
   void onRelease()
   {
@@ -191,11 +205,11 @@ namespace buttonUp
 namespace buttonDown
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonDown};
-  static bool isWingOut{false};
+  static bool isClampOn = false;
   void onPress()
   {
-    isWingOut = !isWingOut;
-    wing.set(isWingOut);
+    isClampOn = !isClampOn;
+    clamp.set(isClampOn);
   }
   void onRelease()
   {
@@ -251,19 +265,19 @@ namespace buttonRight
 namespace buttonL1
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
-  static bool isPuncherOn{false};
-
   void onPress()
   {
-    if (isPuncherOn)
+    if (intakeOn && intakeDirection == vex::forward)
     {
-      puncher.stop();
+      intakeOn = false;
+      intake.stop();
     }
     else
     {
-      puncher.spin(vex::directionType::fwd, puncherSpeedPct, vex::velocityUnits::pct);
+      intakeOn = true;
+      intakeDirection = vex::forward;
+      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
     }
-    isPuncherOn = !isPuncherOn;
   }
   void onRelease()
   {
@@ -283,6 +297,17 @@ namespace buttonL2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL2};
   void onPress()
   {
+    if (intakeOn && intakeDirection == vex::reverse)
+    {
+      intakeOn = false;
+      intake.stop();
+    }
+    else
+    {
+      intakeOn = true;
+      intakeDirection = vex::reverse;
+      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
+    }
   }
   void onRelease()
   {
@@ -302,11 +327,9 @@ namespace buttonR1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR1};
   void onPress()
   {
-    lift.spin(vex::directionType::fwd, liftSpeedPct, vex::velocityUnits::pct);
   }
   void onRelease()
   {
-    lift.stop();
   }
   void onPing()
   {
@@ -323,11 +346,9 @@ namespace buttonR2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR2};
   void onPress()
   {
-    lift.spin(vex::directionType::rev, liftSpeedPct, vex::velocityUnits::pct);
   }
   void onRelease()
   {
-    lift.stop();
   }
   void onPing()
   {
@@ -345,7 +366,16 @@ namespace joystickRight
   static vex::controller::axis yAxis{Controller.Axis2};
   void onPing()
   {
-    rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position() / 100.0, vex::velocityUnits::pct);
+    vex::directionType spinDirection;
+    if (forwardSide == FORWARD) spinDirection = vex::directionType::fwd;
+    if (forwardSide == AFT) spinDirection = vex::directionType::rev;
+
+    double driveSpeedPercent = yAxis.position() / 100.0;
+    if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
+    else driveSpeedPercent *= driveSpeedPercentAlternate;
+
+    if (forwardSide == FORWARD) rightDriveTrainMotorGroup.spin(spinDirection, driveSpeedPercent, vex::velocityUnits::pct);
+    if (forwardSide == AFT) leftDriveTrainMotorGroup.spin(spinDirection, -driveSpeedPercent, vex::velocityUnits::pct);
   }
 }
 
@@ -355,6 +385,16 @@ namespace joystickLeft
   static vex::controller::axis yAxis{Controller.Axis3};
   void onPing()
   {
-    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent * yAxis.position() / 100.0, vex::velocityUnits::pct);
+    vex::directionType spinDirection;
+    if (forwardSide == FORWARD) spinDirection = vex::directionType::fwd;
+    if (forwardSide == AFT) spinDirection = vex::directionType::rev;
+
+    double driveSpeedPercent = yAxis.position() / 100.0;
+    if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
+    else driveSpeedPercent *= driveSpeedPercentAlternate;
+
+    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, yAxis.position(), vex::velocityUnits::pct);
+    if (forwardSide == FORWARD) leftDriveTrainMotorGroup.spin(spinDirection, driveSpeedPercent, vex::velocityUnits::pct);
+    if (forwardSide == AFT) rightDriveTrainMotorGroup.spin(spinDirection, -driveSpeedPercent, vex::velocityUnits::pct);
   }
 }

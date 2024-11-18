@@ -10,8 +10,6 @@ vex::brain Brain{};
 vex::timer SystemClock{};
 constexpr double MillisecondsPerTick{1}; // targeting 20 ticks per second
 
-// define your global instances of motors and other devices here
-
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -56,6 +54,7 @@ void autonomous(void)
 /*  Note: For this project, edits should mostly be focused user-input.cpp.   */
 /*  Global variables and constants should be stored there.                   */
 /*---------------------------------------------------------------------------*/
+
 void usercontrol(void)
 {
   // User control code here, inside the loop

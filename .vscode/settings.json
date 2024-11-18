@@ -5,6 +5,8 @@
     "C_Cpp.default.compilerPath": "C:\\msys64\\mingw64\\bin\\g++.exe",
     "C_Cpp.errorSquiggles": "enabled",
     "files.associations": {
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "string": "cpp",
+        "initializer_list": "cpp"
     }
 }
