@@ -17,10 +17,10 @@
   for (int iterator = 0; iterator < iterations; iterator++)
 
 #define TRIPORTA triport{vex::PORT22}.A
-#define TRIPORTA triport{vex::PORT22}.B
-#define TRIPORTA triport{vex::PORT22}.C
-#define TRIPORTA triport{vex::PORT22}.D
-#define TRIPORTA triport{vex::PORT22}.E
-#define TRIPORTA triport{vex::PORT22}.F
-#define TRIPORTA triport{vex::PORT22}.G
-#define TRIPORTA triport{vex::PORT22}.H
+#define TRIPORTB triport{vex::PORT22}.B
+#define TRIPORTC triport{vex::PORT22}.C
+#define TRIPORTD triport{vex::PORT22}.D
+#define TRIPORTE triport{vex::PORT22}.E
+#define TRIPORTF triport{vex::PORT22}.F
+#define TRIPORTG triport{vex::PORT22}.G
+#define TRIPORTH triport{vex::PORT22}.H

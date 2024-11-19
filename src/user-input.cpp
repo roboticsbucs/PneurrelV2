@@ -366,16 +366,18 @@ namespace joystickRight
   static vex::controller::axis yAxis{Controller.Axis2};
   void onPing()
   {
-    vex::directionType spinDirection;
-    if (forwardSide == FORWARD) spinDirection = vex::directionType::fwd;
-    if (forwardSide == AFT) spinDirection = vex::directionType::rev;
-
     double driveSpeedPercent = yAxis.position() / 100.0;
     if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
     else driveSpeedPercent *= driveSpeedPercentAlternate;
-
-    if (forwardSide == FORWARD) rightDriveTrainMotorGroup.spin(spinDirection, driveSpeedPercent, vex::velocityUnits::pct);
-    if (forwardSide == AFT) leftDriveTrainMotorGroup.spin(spinDirection, -driveSpeedPercent, vex::velocityUnits::pct);
+    
+    if (forwardSide == FORWARD) 
+    {
+      rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent, vex::velocityUnits::pct);
+    }
+    if (forwardSide == AFT) 
+    {
+      leftDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent, vex::velocityUnits::pct);
+    }
   }
 }
 
@@ -385,16 +387,17 @@ namespace joystickLeft
   static vex::controller::axis yAxis{Controller.Axis3};
   void onPing()
   {
-    vex::directionType spinDirection;
-    if (forwardSide == FORWARD) spinDirection = vex::directionType::fwd;
-    if (forwardSide == AFT) spinDirection = vex::directionType::rev;
-
     double driveSpeedPercent = yAxis.position() / 100.0;
     if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
     else driveSpeedPercent *= driveSpeedPercentAlternate;
-
-    leftDriveTrainMotorGroup.spin(vex::directionType::fwd, yAxis.position(), vex::velocityUnits::pct);
-    if (forwardSide == FORWARD) leftDriveTrainMotorGroup.spin(spinDirection, driveSpeedPercent, vex::velocityUnits::pct);
-    if (forwardSide == AFT) rightDriveTrainMotorGroup.spin(spinDirection, -driveSpeedPercent, vex::velocityUnits::pct);
+    
+    if (forwardSide == FORWARD) 
+    {
+      leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent, vex::velocityUnits::pct);
+    }
+    if (forwardSide == AFT) 
+    {
+      rightDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent, vex::velocityUnits::pct);
+    }
   }
 }
