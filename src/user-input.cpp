@@ -43,7 +43,7 @@ so try to make your methon fail-safe to collisions
  * R1 - 
  * R2 - 
  * Up - 
- * Down - Toggle hook
+ * Down - Toggle Clamp
  * Left - 
  * Right - 
  * A - Change front of robot
@@ -70,12 +70,12 @@ enum side
 // Motors
 // - Drive Train
 // - - Port Side
-vex::motor frontLeftDriveTrainMotor{vex::PORT4, STARBOARD};
-vex::motor backLeftDriveTrainMotor{vex::PORT3, STARBOARD};
+vex::motor frontLeftDriveTrainMotor{vex::PORT11, STARBOARD};
+vex::motor backLeftDriveTrainMotor{vex::PORT12, STARBOARD};
 vex::motor_group leftDriveTrainMotorGroup{frontLeftDriveTrainMotor, backLeftDriveTrainMotor};
 // - - Starboard Side
-vex::motor frontRightDriveTrainMotor{vex::PORT2, PORT};
-vex::motor backRightDriveTrainMotor{vex::PORT1, PORT};
+vex::motor frontRightDriveTrainMotor{vex::PORT13, PORT};
+vex::motor backRightDriveTrainMotor{vex::PORT14, PORT};
 vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
 // - Intake
 vex::motor intake(vex::PORT10, STARBOARD);
@@ -92,7 +92,7 @@ double driveSpeedPercentAlternate = 50;
 bool useDefaultSpeed = true;
 side forwardSide = FORWARD;
 
-double intakeSpeed = 50;
+double intakeSpeed = 80;
 bool intakeOn = false;
 vex::directionType intakeDirection = vex::forward;
 /*
@@ -267,10 +267,11 @@ namespace buttonL1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
   void onPress()
   {
-    if (intakeOn && intakeDirection == vex::forward)
+    if (intakeOn)
     {
-      intakeOn = false;
-      intake.stop();
+      if (intakeDirection == vex::forward) intakeDirection = vex::reverse;
+      else intakeDirection = vex::forward;
+      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
     }
     else
     {
@@ -297,17 +298,8 @@ namespace buttonL2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL2};
   void onPress()
   {
-    if (intakeOn && intakeDirection == vex::reverse)
-    {
-      intakeOn = false;
-      intake.stop();
-    }
-    else
-    {
-      intakeOn = true;
-      intakeDirection = vex::reverse;
-      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
-    }
+    intakeOn = false;
+    intake.stop();
   }
   void onRelease()
   {

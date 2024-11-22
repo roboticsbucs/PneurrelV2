@@ -13,7 +13,6 @@ VexV5VscodeTemplate
 │
 ├───src
 │       main.cpp
-│       user-input-templates.cpp
 │       user-input.cpp
 │
 └───vex
@@ -21,7 +20,7 @@ VexV5VscodeTemplate
         mkrules.mk
 
 ```
-Inside the template you will find several folders, but the one you need to worry about is labeled `src`. In `src`, you will find three files written in C++: `main.cpp`, `user-input.cpp`, and `user-input-templates.cpp`. 
+Inside the template you will find several folders, but the one you need to worry about is labeled `src`. In `src`, you will find three files written in C++: `main.cpp`, and `user-input.cpp`.
 # `main.cpp`
 This file establishes the control flow of the robot. It tells the robot what to do when, and contains the `main()` function for the project. This is where you will write your autonomous stage code.
 # `user-input.cpp`
@@ -47,5 +46,3 @@ namespace buttonA
 }
 ```
 These namespaces are set up so that whenever their respective button is pressed, the `onPress()` function will be called once. The same will happen with `onRelease()`. Every tick, the `onPing()` function is called, for when you need to monitor something and act in response to it, like a PID Controller. You can store local variables that a specific button needs in this namespace.
-# `user-input-templates.cpp`
-This is a collection of commonly used button types. This has templates for empty, unused buttons, it has templates for toggling actions, acting after a delay, etc.
