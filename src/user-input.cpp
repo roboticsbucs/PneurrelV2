@@ -267,18 +267,15 @@ namespace buttonL1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
   void onPress()
   {
-    if (intakeOn)
-    {
-      if (intakeDirection == vex::forward) intakeDirection = vex::reverse;
-      else intakeDirection = vex::forward;
-      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
-    }
-    else
-    {
+    if (!intakeOn) {
       intakeOn = true;
       intakeDirection = vex::forward;
-      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
+    } else if (intakeDirection == vex::forward) {
+      intakeDirection = vex::reverse;
+    } else {
+      intakeDirection = vex::forward;
     }
+    intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
   }
   void onRelease()
   {
