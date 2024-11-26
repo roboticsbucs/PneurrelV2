@@ -41,14 +41,14 @@ so try to make your methon fail-safe to collisions
  * L1 - Intake in
  * L2 - Intake out
  * R1 - 
- * R2 - 
- * Up - 
- * Down - Toggle Clamp
+ * R2 - Toggle clamp
+ * Up - Toggle penguin thingy
+ * Down - 
  * Left - 
  * Right - 
  * A - Change front of robot
  * B -
- * X - Change Drive Speed Mode
+ * X - Change drive speed mode
  * Y -
  *
  */
@@ -79,6 +79,10 @@ vex::motor backRightDriveTrainMotor{vex::PORT14, PORT};
 vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightDriveTrainMotor};
 // - Intake
 vex::motor intake(vex::PORT10, STARBOARD);
+// - PENGUIN
+vex::motor penguinRight(vex::PORT1, PORT);
+vex::motor penguinLeft(vex::PORT2, STARBOARD);
+vex::motor_group penguin(penguinRight, penguinLeft);
 
 // Pneumatics
 // - Clamp
@@ -92,9 +96,25 @@ double driveSpeedPercentAlternate = 50;
 bool useDefaultSpeed = true;
 side forwardSide = FORWARD;
 
-double intakeSpeed = 80;
+double intakeSpeed = 100;
 bool intakeOn = false;
 vex::directionType intakeDirection = vex::forward;
+
+bool isClampOn = false;
+
+double penguinSpeed = 100;
+bool penguinOn = false;
+
+/*
+----------------Auton-------------
+*/
+
+void auton()
+{
+  leftDriveTrainMotorGroup.spinFor(2, vex::seconds);
+  rightDriveTrainMotorGroup.spinFor(2, vex::seconds);
+}
+
 /*
 ---------------Button Definitions-------------
 */
@@ -104,13 +124,9 @@ namespace buttonA
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonA};
   void onPress()
   {
-    switch (forwardSide)
-    {
-      case FORWARD:
-        forwardSide = AFT;
-      case AFT:
-        forwardSide = FORWARD;
-    }
+    if (forwardSide == FORWARD) forwardSide = AFT;
+    else forwardSide = FORWARD;
+    Controller.rumble(".");
   }
   void onRelease()
   {
@@ -188,6 +204,9 @@ namespace buttonUp
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonUp};
   void onPress()
   {
+    penguinOn = !penguinOn;
+    if (penguinOn) penguin.spin(vex::forward, penguinSpeed, vex::pct);
+    else penguin.stop();
   }
   void onRelease()
   {
@@ -205,11 +224,8 @@ namespace buttonUp
 namespace buttonDown
 {
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonDown};
-  static bool isClampOn = false;
   void onPress()
   {
-    isClampOn = !isClampOn;
-    clamp.set(isClampOn);
   }
   void onRelease()
   {
@@ -316,6 +332,8 @@ namespace buttonR1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR1};
   void onPress()
   {
+    isClampOn = !isClampOn;
+    clamp.set(isClampOn);
   }
   void onRelease()
   {
@@ -335,6 +353,8 @@ namespace buttonR2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR2};
   void onPress()
   {
+    isClampOn = !isClampOn;
+    clamp.set(isClampOn);
   }
   void onRelease()
   {

@@ -1,4 +1,7 @@
 #pragma once
+
+void auton();
+
 namespace buttonA
 {
   void onPress();
