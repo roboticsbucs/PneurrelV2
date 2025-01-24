@@ -2,6 +2,8 @@
 #include <iostream>
 #include "vex.h"
 #include "main.h"
+#include <ctime>
+#include <chrono>
 
 /*
 ------------------------------------------------------------------
@@ -28,7 +30,7 @@ All Variables that impact only one button must be stored within the button's nam
 ! Even if the method is empty, DO NOT DELETE the method, this will cause the system to break.
 
 A note to advanced readers: every use of the method vex::controller::button::pressed spins up a new thread,
-so try to make your methon fail-safe to collisions
+so make sure all code is thread safe. If rust wont let you do it, you shouldnt do it.
 */
 
 /*
@@ -40,16 +42,16 @@ so try to make your methon fail-safe to collisions
  *
  * L1 - Intake in
  * L2 - Intake out
- * R1 - 
+ * R1 - Toggle Whacker
  * R2 - Toggle clamp
- * Up - Toggle penguin thingy
- * Down - 
- * Left - 
- * Right - 
+ * Up -
+ * Down -
+ * Left -
+ * Right -
  * A - Change front of robot
  * B -
  * X - Change drive speed mode
- * Y -
+ * Y - Reset Whacker Position
  *
  */
 
@@ -80,9 +82,9 @@ vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightD
 // - Intake
 vex::motor intake(vex::PORT10, STARBOARD);
 // - PENGUIN
-vex::motor penguinRight(vex::PORT1, PORT);
-vex::motor penguinLeft(vex::PORT2, STARBOARD);
-vex::motor_group penguin(penguinRight, penguinLeft);
+vex::motor whackerRight(vex::PORT1, PORT);
+vex::motor WhackerRight(vex::PORT2, STARBOARD);
+vex::motor_group whacker(whackerRight, WhackerRight);
 
 // Pneumatics
 // - Clamp
@@ -96,14 +98,11 @@ double driveSpeedPercentAlternate = 50;
 bool useDefaultSpeed = true;
 side forwardSide = FORWARD;
 
-double intakeSpeed = 100;
+double intakeSpeed = 75;
 bool intakeOn = false;
 vex::directionType intakeDirection = vex::forward;
 
 bool isClampOn = false;
-
-double penguinSpeed = 100;
-bool penguinOn = false;
 
 /*
 ----------------Auton-------------
@@ -124,8 +123,10 @@ namespace buttonA
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonA};
   void onPress()
   {
-    if (forwardSide == FORWARD) forwardSide = AFT;
-    else forwardSide = FORWARD;
+    if (forwardSide == FORWARD)
+      forwardSide = AFT;
+    else
+      forwardSide = FORWARD;
     Controller.rumble(".");
   }
   void onRelease()
@@ -157,6 +158,7 @@ namespace buttonB
   {
     BUTTON_OBJECT.pressed(onPress);
     BUTTON_OBJECT.released(onRelease);
+    whacker.resetPosition();
   }
 }
 
@@ -185,6 +187,10 @@ namespace buttonY
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonY};
   void onPress()
   {
+    whacker.spinFor(vex::directionType::rev, 1, vex::timeUnits::sec);
+    whacker.stop(vex::brakeType::hold);
+    vex::wait(.1, vex::sec);
+    whacker.stop(vex::brakeType::coast);
   }
   void onRelease()
   {
@@ -204,9 +210,6 @@ namespace buttonUp
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonUp};
   void onPress()
   {
-    penguinOn = !penguinOn;
-    if (penguinOn) penguin.spin(vex::forward, penguinSpeed, vex::pct);
-    else penguin.stop();
   }
   void onRelease()
   {
@@ -283,12 +286,17 @@ namespace buttonL1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
   void onPress()
   {
-    if (!intakeOn) {
+    if (!intakeOn)
+    {
       intakeOn = true;
       intakeDirection = vex::forward;
-    } else if (intakeDirection == vex::forward) {
+    }
+    else if (intakeDirection == vex::forward)
+    {
       intakeDirection = vex::reverse;
-    } else {
+    }
+    else
+    {
       intakeDirection = vex::forward;
     }
     intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
@@ -303,6 +311,10 @@ namespace buttonL1
   {
     BUTTON_OBJECT.pressed(onPress);
     BUTTON_OBJECT.released(onRelease);
+    whacker.spinFor(vex::directionType::rev, 1, vex::timeUnits::sec);
+    whacker.stop(vex::brakeType::hold);
+    vex::wait(.1, vex::sec);
+    whacker.stop(vex::brakeType::coast);
   }
 }
 
@@ -332,8 +344,17 @@ namespace buttonR1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR1};
   void onPress()
   {
-    isClampOn = !isClampOn;
-    clamp.set(isClampOn);
+    whacker.spin(vex::directionType::rev, 50, vex::pct);
+    vex::wait(.2, vex::sec);
+    whacker.resetPosition();
+    whacker.spin(vex::directionType::fwd, 100, vex::pct);
+    int timeStartMS = static_cast<int>(SystemClock.time());
+    waitUntil(whacker.position(vex::rotationUnits::deg) > 120 || static_cast<int>(SystemClock.time()) - timeStartMS > 1000);
+    whacker.spin(vex::directionType::rev, 50, vex::pct);
+    vex::wait(.6, vex::sec);
+    whacker.stop(vex::brakeType::hold);
+    vex::wait(.1, vex::sec);
+    whacker.stop(vex::brakeType::coast);
   }
   void onRelease()
   {
@@ -376,14 +397,16 @@ namespace joystickRight
   void onPing()
   {
     double driveSpeedPercent = yAxis.position() / 100.0;
-    if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
-    else driveSpeedPercent *= driveSpeedPercentAlternate;
-    
-    if (forwardSide == FORWARD) 
+    if (useDefaultSpeed)
+      driveSpeedPercent *= driveSpeedPercentDefault;
+    else
+      driveSpeedPercent *= driveSpeedPercentAlternate;
+
+    if (forwardSide == FORWARD)
     {
       rightDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent, vex::velocityUnits::pct);
     }
-    if (forwardSide == AFT) 
+    if (forwardSide == AFT)
     {
       leftDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent, vex::velocityUnits::pct);
     }
@@ -397,14 +420,16 @@ namespace joystickLeft
   void onPing()
   {
     double driveSpeedPercent = yAxis.position() / 100.0;
-    if (useDefaultSpeed) driveSpeedPercent *= driveSpeedPercentDefault;
-    else driveSpeedPercent *= driveSpeedPercentAlternate;
-    
-    if (forwardSide == FORWARD) 
+    if (useDefaultSpeed)
+      driveSpeedPercent *= driveSpeedPercentDefault;
+    else
+      driveSpeedPercent *= driveSpeedPercentAlternate;
+
+    if (forwardSide == FORWARD)
     {
       leftDriveTrainMotorGroup.spin(vex::directionType::fwd, driveSpeedPercent, vex::velocityUnits::pct);
     }
-    if (forwardSide == AFT) 
+    if (forwardSide == AFT)
     {
       rightDriveTrainMotorGroup.spin(vex::directionType::rev, driveSpeedPercent, vex::velocityUnits::pct);
     }
