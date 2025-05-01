@@ -15,7 +15,7 @@ Each button has a respective namespace which has four methods:
 - onRelease()
 - onPing()
 initialize():
-Is called at the start of usercontrol to allow proper control flow.
+Is called at the start of user-control to allow proper control flow.
 This should be called exactly once.
 onPress():
 Is called once and only once on the event that the namespace's respective button is pressed
@@ -30,7 +30,7 @@ All Variables that impact only one button must be stored within the button's nam
 ! Even if the method is empty, DO NOT DELETE the method, this will cause the system to break.
 
 A note to advanced readers: every use of the method vex::controller::button::pressed spins up a new thread,
-so make sure all code is thread safe. If rust wont let you do it, you shouldnt do it.
+so make sure all code is thread safe. If rust wont let you do it, you shouldn't do it.
 */
 
 /*
