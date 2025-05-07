@@ -30,7 +30,7 @@ All Variables that impact only one button must be stored within the button's nam
 ! Even if the method is empty, DO NOT DELETE the method, this will cause the system to break.
 
 A note to advanced readers: every use of the method vex::controller::button::pressed spins up a new thread,
-so make sure all code is thread safe. If rust wont let you do it, you shouldn't do it.
+so make sure all code is thread safe. If a walrus wont let you do it, you shouldn't do it.
 */
 
 /*
@@ -42,16 +42,16 @@ so make sure all code is thread safe. If rust wont let you do it, you shouldn't 
  *
  * L1 - Intake in
  * L2 - Intake out
- * R1 - Toggle Whacker
+ * R1 - Toggle squisher
  * R2 - Toggle clamp
- * Up -
- * Down -
- * Left -
- * Right -
+ * Up - Primary arm forward
+ * Down - Primary arm backward
+ * Left - 
+ * Right - Secondary arm push and retract
  * A - Change front of robot
- * B -
+ * B - Bee movie
  * X - Change drive speed mode
- * Y - Reset Whacker Position
+ * Y - Set secondary arm default position
  *
  */
 
@@ -82,13 +82,13 @@ vex::motor_group rightDriveTrainMotorGroup{frontRightDriveTrainMotor, backRightD
 // - Intake
 vex::motor intake(vex::PORT10, STARBOARD);
 // - PENGUIN
-vex::motor whackerRight(vex::PORT1, PORT);
-vex::motor WhackerRight(vex::PORT2, STARBOARD);
-vex::motor_group whacker(whackerRight, WhackerRight);
+vex::motor armPrimary(vex::PORT1, STARBOARD);
+vex::motor armSecondary(vex::PORT2, STARBOARD);
 
 // Pneumatics
 // - Clamp
-vex::pneumatics clamp(vex::TRIPORTA);
+vex::pneumatics clamp(vex::TRIPORTC);
+vex::pneumatics squisher(vex::TRIPORTB);
 
 /*
 ---------------Variables-----------------------
@@ -102,7 +102,22 @@ double intakeSpeed = 75;
 bool intakeOn = false;
 vex::directionType intakeDirection = vex::forward;
 
-bool isClampOn = false;
+double armPrimarySpeed = 50;
+double armSecondarySpeed = 75;
+
+double armPrimaryExclusionStartRev = 0.3, armPrimaryExclusionEndRev = 0.5;
+
+bool clampOn = false;
+bool squisherOn = false;
+
+/*
+-------------Helper Funcitons-------------
+*/
+bool allowArmSecondary()
+{
+  double primaryRev = armPrimary.position(vex::rotationUnits::rev);
+  return !(primaryRev > armPrimaryExclusionEndRev && primaryRev < armPrimaryExclusionEndRev);
+}
 
 /*
 ----------------Auton-------------
@@ -158,7 +173,6 @@ namespace buttonB
   {
     BUTTON_OBJECT.pressed(onPress);
     BUTTON_OBJECT.released(onRelease);
-    whacker.resetPosition();
   }
 }
 
@@ -187,10 +201,9 @@ namespace buttonY
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonY};
   void onPress()
   {
-    whacker.spinFor(vex::directionType::rev, 1, vex::timeUnits::sec);
-    whacker.stop(vex::brakeType::hold);
-    vex::wait(.1, vex::sec);
-    whacker.stop(vex::brakeType::coast);
+    if (!allowArmSecondary()) return;
+    armSecondary.stop();
+    armSecondary.spinFor(vex::directionType::rev, 1.1, vex::rotationUnits::rev, armSecondarySpeed, vex::velocityUnits::pct, true);
   }
   void onRelease()
   {
@@ -210,9 +223,11 @@ namespace buttonUp
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonUp};
   void onPress()
   {
+    armPrimary.spin(vex::directionType::fwd, armPrimarySpeed, vex::velocityUnits::pct);
   }
   void onRelease()
   {
+    armPrimary.stop();
   }
   void onPing()
   {
@@ -229,9 +244,11 @@ namespace buttonDown
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonDown};
   void onPress()
   {
+    armPrimary.spin(vex::directionType::rev, armPrimarySpeed, vex::velocityUnits::pct);
   }
   void onRelease()
   {
+    armPrimary.stop();
   }
   void onPing()
   {
@@ -267,9 +284,14 @@ namespace buttonRight
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonRight};
   void onPress()
   {
+    if (!allowArmSecondary()) return;
+    armSecondary.stop();
+    armSecondary.spinFor(vex::directionType::fwd, 0.6, vex::rotationUnits::rev, armSecondarySpeed, vex::velocityUnits::pct, true);
   }
   void onRelease()
   {
+    armSecondary.stop();
+    armSecondary.spinFor(vex::directionType::rev, 0.7, vex::rotationUnits::rev, armSecondarySpeed, vex::velocityUnits::pct, true);
   }
   void onPing()
   {
@@ -286,20 +308,31 @@ namespace buttonL1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL1};
   void onPress()
   {
-    if (!intakeOn)
+    if (intakeOn && intakeDirection == vex::forward)
     {
-      intakeOn = true;
-      intakeDirection = vex::forward;
-    }
-    else if (intakeDirection == vex::forward)
-    {
-      intakeDirection = vex::reverse;
+      intakeOn = false;
+      intake.stop();
     }
     else
     {
+      intakeOn = true;
       intakeDirection = vex::forward;
+      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
     }
-    intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
+    // if (!intakeOn)
+    // {
+    //   intakeOn = true;
+    //   intakeDirection = vex::forward;
+    // }
+    // else if (intakeDirection == vex::forward)
+    // {
+    //   intakeDirection = vex::reverse;
+    // }
+    // else
+    // {
+    //   intakeDirection = vex::forward;
+    // }
+    // intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
   }
   void onRelease()
   {
@@ -311,10 +344,6 @@ namespace buttonL1
   {
     BUTTON_OBJECT.pressed(onPress);
     BUTTON_OBJECT.released(onRelease);
-    whacker.spinFor(vex::directionType::rev, 1, vex::timeUnits::sec);
-    whacker.stop(vex::brakeType::hold);
-    vex::wait(.1, vex::sec);
-    whacker.stop(vex::brakeType::coast);
   }
 }
 
@@ -323,8 +352,19 @@ namespace buttonL2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonL2};
   void onPress()
   {
-    intakeOn = false;
-    intake.stop();
+    if (intakeOn && intakeDirection == vex::reverse)
+    {
+      intakeOn = false;
+      intake.stop();
+    }
+    else
+    {
+      intakeOn = true;
+      intakeDirection = vex::reverse;
+      intake.spin(intakeDirection, intakeSpeed, vex::velocityUnits::pct);
+    }
+    // intakeOn = false;
+    // intake.stop();
   }
   void onRelease()
   {
@@ -344,17 +384,8 @@ namespace buttonR1
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR1};
   void onPress()
   {
-    whacker.spin(vex::directionType::rev, 50, vex::pct);
-    vex::wait(.2, vex::sec);
-    whacker.resetPosition();
-    whacker.spin(vex::directionType::fwd, 100, vex::pct);
-    int timeStartMS = static_cast<int>(SystemClock.time());
-    waitUntil(whacker.position(vex::rotationUnits::deg) > 120 || static_cast<int>(SystemClock.time()) - timeStartMS > 1000);
-    whacker.spin(vex::directionType::rev, 50, vex::pct);
-    vex::wait(.6, vex::sec);
-    whacker.stop(vex::brakeType::hold);
-    vex::wait(.1, vex::sec);
-    whacker.stop(vex::brakeType::coast);
+    squisherOn = !squisherOn;
+    squisher.set(squisherOn);
   }
   void onRelease()
   {
@@ -374,8 +405,8 @@ namespace buttonR2
   static vex::controller::button BUTTON_OBJECT{Controller.ButtonR2};
   void onPress()
   {
-    isClampOn = !isClampOn;
-    clamp.set(isClampOn);
+    clampOn = !clampOn;
+    clamp.set(clampOn);
   }
   void onRelease()
   {
